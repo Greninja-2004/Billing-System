@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // Note: In a real app, hash passwords! Storing plaintext for demo brevity.
+  role      String   @default("VIEWER") // ADMIN, MANAGER, VIEWER
+  status    String   @default("Active") // Active, Deactivated
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  tier          String    @default("Bronze") // Enterprise, Gold, Silver, Bronze
+  creditScore   Int       @default(600)
+  lifetimeValue Float     @default(0.0)
+  status        String    @default("Active") // Active, Suspended
+  joined        DateTime  @default(now())
+  
+  invoices      Invoice[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Invoice {
+  id            String    @id @default(uuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  amount        Float
+  dueDate       DateTime
+  status        String    @default("Draft") // Paid, Pending, Overdue, Draft
+  type          String    @default("One-Time") // Recurring, One-Time, Prorated
+  
+  payments      Payment[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  method        String   // Credit Card, Bank Transfer, Wallet
+  amount        Float
+  status        String   @default("Completed") // Completed, Failed, Refunded, Partial
+  date          DateTime @default(now())
+  fraudFlag     Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  time      DateTime @default(now())
+  user      String   // Using username for simplicity
+  ip        String?
+  action    String
+  entity    String
+  details   String
+}
