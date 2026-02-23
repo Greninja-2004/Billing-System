@@ -40,7 +40,7 @@ export const MainLayout = () => {
     };
 
     const navItems = [
-        { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
         { name: 'Customers', path: '/customers', icon: <Users size={20} />, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
         { name: 'Invoices', path: '/invoices', icon: <FileText size={20} />, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
         { name: 'Payments', path: '/payments', icon: <CreditCard size={20} />, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
