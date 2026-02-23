@@ -70,13 +70,13 @@ export const Payments = () => {
                     <p className="text-muted-foreground mt-1">Review transaction history, run manual charges, and issue refunds.</p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Export Ledger</Button>
-                    <Button><CreditCard className="mr-2 h-4 w-4" /> Process Payment</Button>
+                    <Button variant="outline" className="hover-lift" onClick={() => window.print()}><Download className="mr-2 h-4 w-4" /> Export Ledger</Button>
+                    <Button className="hover-lift" onClick={() => alert('Launching Payment Processor Gateway...')}><CreditCard className="mr-2 h-4 w-4" /> Process Payment</Button>
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3 mb-6">
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Today's Volume</CardTitle>
                     </CardHeader>
@@ -84,7 +84,7 @@ export const Payments = () => {
                         <div className="text-2xl font-bold">$17,000.00</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Failed Transactions</CardTitle>
                     </CardHeader>
@@ -92,7 +92,7 @@ export const Payments = () => {
                         <div className="text-2xl font-bold text-destructive">1</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Refunds Issued</CardTitle>
                     </CardHeader>
@@ -102,7 +102,7 @@ export const Payments = () => {
                 </Card>
             </div>
 
-            <Card>
+            <Card className="hover-lift transition-all duration-300">
                 <CardHeader className="pb-3 border-b">
                     <div className="relative w-full sm:max-w-md mt-2">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -143,7 +143,7 @@ export const Payments = () => {
                                 </TableRow>
                             ) : (
                                 filteredPayments.map((payment) => (
-                                    <TableRow key={payment.id}>
+                                    <TableRow key={payment.id} className="hover:bg-muted/50 transition-colors">
                                         <TableCell className="font-medium text-foreground">{payment.id}</TableCell>
                                         <TableCell className="text-muted-foreground whitespace-nowrap">{new Date(payment.date).toLocaleString()}</TableCell>
                                         <TableCell>

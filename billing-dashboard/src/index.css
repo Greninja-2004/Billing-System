@@ -35,11 +35,16 @@
     --radius: 0.5rem;
 
     /* Charts */
-    --chart-1: 221.2 83.2% 53.3%; /* Blue */
-    --chart-2: 142.1 76.2% 36.3%; /* Green */
-    --chart-3: 47.9 95.8% 53.1%;  /* Yellow */
-    --chart-4: 346.8 77.2% 49.8%; /* Red */
-    --chart-5: 262.1 83.3% 57.8%; /* Purple */
+    --chart-1: 221.2 83.2% 53.3%;
+    /* Blue */
+    --chart-2: 142.1 76.2% 36.3%;
+    /* Green */
+    --chart-3: 47.9 95.8% 53.1%;
+    /* Yellow */
+    --chart-4: 346.8 77.2% 49.8%;
+    /* Red */
+    --chart-5: 262.1 83.3% 57.8%;
+    /* Purple */
   }
 
   .dark {
@@ -77,21 +82,145 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground;
+  }
+
+  /* Smooth Light/Dark mode transitions */
+  html,
+  body,
+  div,
+  span,
+  applet,
+  object,
+  iframe,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  blockquote,
+  pre,
+  a,
+  abbr,
+  acronym,
+  address,
+  big,
+  cite,
+  code,
+  del,
+  dfn,
+  em,
+  img,
+  ins,
+  kbd,
+  q,
+  s,
+  samp,
+  small,
+  strike,
+  strong,
+  sub,
+  sup,
+  tt,
+  var,
+  b,
+  u,
+  i,
+  center,
+  dl,
+  dt,
+  dd,
+  ol,
+  ul,
+  li,
+  fieldset,
+  form,
+  label,
+  legend,
+  table,
+  caption,
+  tbody,
+  tfoot,
+  thead,
+  tr,
+  th,
+  td,
+  article,
+  aside,
+  canvas,
+  details,
+  embed,
+  figure,
+  figcaption,
+  footer,
+  header,
+  hgroup,
+  menu,
+  nav,
+  output,
+  ruby,
+  section,
+  summary,
+  time,
+  mark,
+  audio,
+  video {
+    transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out, border-color 0.4s ease-in-out, fill 0.4s ease-in-out;
   }
 }
 
 /* Base custom styles and animations */
 @layer utilities {
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .hover-lift:hover {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.08);
+  }
+
+  button {
+    transition: transform 0.1s ease, filter 0.2s ease, opacity 0.2s ease !important;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+
   .animate-shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
   }
 }
 
 @keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
 }

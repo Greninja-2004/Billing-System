@@ -123,12 +123,12 @@ export const Invoices = () => {
                     <p className="text-muted-foreground mt-1">Manage billing, track overdues, and send reminders.</p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Export</Button>
-                    <Button><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
+                    <Button variant="outline" className="hover-lift" onClick={() => window.print()}><Download className="mr-2 h-4 w-4" /> Export</Button>
+                    <Button className="hover-lift" onClick={() => alert('Opening New Invoice Modal...')}><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
                 </div>
             </div>
 
-            <Card>
+            <Card className="hover-lift transition-all duration-300">
                 <CardHeader className="pb-3 border-b">
                     <div className="flex flex-col space-y-4">
                         <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 mt-2">
@@ -208,7 +208,7 @@ export const Invoices = () => {
                                 </TableRow>
                             ) : (
                                 filteredInvoices.map((inv) => (
-                                    <TableRow key={inv.id}>
+                                    <TableRow key={inv.id} className="hover:bg-muted/50 transition-colors">
                                         <TableCell className="font-medium text-foreground">{inv.id}</TableCell>
                                         <TableCell className="font-semibold">{inv.customerName}</TableCell>
                                         <TableCell className="text-muted-foreground">
@@ -251,7 +251,7 @@ export const Invoices = () => {
                                                                 )}
                                                             </DropdownMenuItem>
                                                         )}
-                                                        <DropdownMenuItem onClick={() => alert(`Downloading ${inv.id}`)}>
+                                                        <DropdownMenuItem onClick={() => window.print()}>
                                                             Download PDF
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>

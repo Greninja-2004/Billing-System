@@ -64,15 +64,15 @@ export const Dashboard = () => {
                     <p className="text-muted-foreground mt-1">Here's what's happening today in your billing ecosystem.</p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline"><FileText className="mr-2 h-4 w-4" /> Download Report</Button>
-                    <Button><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
+                    <Button variant="outline" className="hover-lift" onClick={() => window.print()}><FileText className="mr-2 h-4 w-4" /> Download Report</Button>
+                    <Button className="hover-lift" onClick={() => alert('Opening New Invoice Modal...')}><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
                 </div>
             </div>
 
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Total Revenue */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Revenue (YTD)</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -89,7 +89,7 @@ export const Dashboard = () => {
                 </Card>
 
                 {/* Pending Invoices */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
                         <FileText className="h-4 w-4 text-muted-foreground" />
@@ -106,7 +106,7 @@ export const Dashboard = () => {
                 </Card>
 
                 {/* Overdue Accounts */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Overdue Accounts</CardTitle>
                         <AlertCircle className="h-4 w-4 text-destructive" />
@@ -123,7 +123,7 @@ export const Dashboard = () => {
                 </Card>
 
                 {/* Active Customers */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -143,7 +143,7 @@ export const Dashboard = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
 
                 {/* Main Revenue Chart */}
-                <Card className="lg:col-span-4">
+                <Card className="lg:col-span-4 hover-lift transition-all duration-300">
                     <CardHeader>
                         <CardTitle>Revenue Forecast & History</CardTitle>
                         <CardDescription>Visualizing MRR over the last 12 months with moving averages.</CardDescription>
@@ -173,7 +173,7 @@ export const Dashboard = () => {
                 </Card>
 
                 {/* Invoice Status Breakdown */}
-                <Card className="lg:col-span-3">
+                <Card className="lg:col-span-3 hover-lift transition-all duration-300">
                     <CardHeader>
                         <CardTitle>Invoice Status Breakdown</CardTitle>
                         <CardDescription>Payment distribution across all outstanding invoices.</CardDescription>
@@ -214,7 +214,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Recent Activity Feed */}
-            <Card>
+            <Card className="hover-lift transition-all duration-300">
                 <CardHeader>
                     <CardTitle>Recent Payment Activity</CardTitle>
                     <CardDescription>Live feed of the latest transactions processed by the Billing Engine.</CardDescription>

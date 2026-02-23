@@ -69,12 +69,12 @@ export const Customers = () => {
                     <h2 className="text-3xl font-bold tracking-tight">Customers</h2>
                     <p className="text-muted-foreground mt-1">Manage your customer accounts, tiers, and credit profiles.</p>
                 </div>
-                <Button>
+                <Button className="hover-lift" onClick={() => alert('Opening New Customer Wizard...')}>
                     <Plus className="mr-2 h-4 w-4" /> Add Customer
                 </Button>
             </div>
 
-            <Card>
+            <Card className="hover-lift transition-all duration-300">
                 <CardHeader className="pb-3 border-b">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 mt-2">
                         <div className="relative w-full sm:max-w-sm">
@@ -120,7 +120,7 @@ export const Customers = () => {
                                 </TableRow>
                             ) : (
                                 filteredCustomers.map((customer) => (
-                                    <TableRow key={customer.id}>
+                                    <TableRow key={customer.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => alert(`View Customer Profile: ${customer.name}`)}>
                                         <TableCell className="font-medium text-muted-foreground">{customer.id}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">

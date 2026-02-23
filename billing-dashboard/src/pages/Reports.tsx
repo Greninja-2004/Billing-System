@@ -39,14 +39,14 @@ export const Reports = () => {
                     <p className="text-muted-foreground mt-1">Aging analysis, revenue forecasting, and customer lifetime value.</p>
                 </div>
                 <div className="flex space-x-2">
-                    <Button variant="outline"><Calendar className="mr-2 h-4 w-4" /> This Quarter</Button>
-                    <Button><Download className="mr-2 h-4 w-4" /> Export PDF</Button>
+                    <Button variant="outline" className="hover-lift"><Calendar className="mr-2 h-4 w-4" /> This Quarter</Button>
+                    <Button className="hover-lift" onClick={() => window.print()}><Download className="mr-2 h-4 w-4" /> Export PDF</Button>
                 </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
                 {/* AR Aging Report */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader>
                         <CardTitle>Accounts Receivable Aging</CardTitle>
                         <CardDescription>Outstanding invoice amounts bucketed by days overdue.</CardDescription>
@@ -81,7 +81,7 @@ export const Reports = () => {
                 </Card>
 
                 {/* Revenue Forecast */}
-                <Card>
+                <Card className="hover-lift transition-all duration-300">
                     <CardHeader>
                         <CardTitle>Revenue Forecast (SMA)</CardTitle>
                         <CardDescription>3-month Simple Moving Average projection vs Actuals.</CardDescription>
@@ -112,7 +112,7 @@ export const Reports = () => {
             </div>
 
             {/* CLV Leaderboard */}
-            <Card>
+            <Card className="hover-lift transition-all duration-300">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
@@ -125,7 +125,7 @@ export const Reports = () => {
                 <CardContent>
                     <div className="space-y-4">
                         {TOP_CUSTOMERS.map((cust) => (
-                            <div key={cust.rank} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                            <div key={cust.rank} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors hover-lift">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                                         #{cust.rank}

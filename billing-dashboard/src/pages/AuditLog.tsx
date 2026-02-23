@@ -67,7 +67,7 @@ export const AuditLog = () => {
                 </div>
             </div>
 
-            <Card>
+            <Card className="hover-lift transition-all duration-300 border-l-4 border-l-slate-400">
                 <CardHeader className="pb-3 border-b">
                     <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0 mt-2">
                         <div className="relative w-full sm:max-w-md">
