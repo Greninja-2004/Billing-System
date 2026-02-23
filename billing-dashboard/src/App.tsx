@@ -14,6 +14,7 @@ import { Users } from './pages/Users';
 import { AuditLog } from './pages/AuditLog';
 import { Settings } from './pages/Settings';
 import { Success } from './pages/Success';
+import { Subscriptions } from './pages/Subscriptions';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/success" element={<Success />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
 
             {/* Admin/Manager Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']} />}>

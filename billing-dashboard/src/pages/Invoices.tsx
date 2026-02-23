@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
-import { Search, Plus, MoreHorizontal, Download, FileCheck, Mail, Loader2, CreditCard } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Download, FileCheck, Mail, Loader2, CreditCard, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -115,6 +115,9 @@ export const Invoices = () => {
         }
     };
 
+    const overdueCount = invoices.filter(i => i.status === 'Overdue').length;
+    const overdueTotal = invoices.filter(i => i.status === 'Overdue').reduce((s, i) => s + i.amount, 0);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -127,6 +130,22 @@ export const Invoices = () => {
                     <Button className="hover-lift" onClick={() => alert('Opening New Invoice Modal...')}><Plus className="mr-2 h-4 w-4" /> New Invoice</Button>
                 </div>
             </div>
+
+            {/* Overdue Alert Banner */}
+            {overdueCount > 0 && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-red-500/30 bg-red-500/5 animate-slide-up">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        <div>
+                            <p className="font-semibold text-red-600">{overdueCount} Overdue Invoice{overdueCount > 1 ? 's' : ''}</p>
+                            <p className="text-sm text-muted-foreground">Total outstanding: <span className="font-bold text-foreground">${overdueTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></p>
+                        </div>
+                    </div>
+                    <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white gap-2 flex-shrink-0" onClick={() => setStatusFilter('Overdue')}>
+                        <CreditCard className="h-4 w-4" /> Pay All Overdue
+                    </Button>
+                </div>
+            )}
 
             <Card className="hover-lift transition-all duration-300">
                 <CardHeader className="pb-3 border-b">
@@ -220,40 +239,43 @@ export const Invoices = () => {
                                             ${inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex justify-end space-x-2">
+                                            <div className="flex justify-end items-center gap-2">
+                                                {/* Prominent Pay Now button for Pending/Overdue */}
+                                                {(inv.status === 'Pending' || inv.status === 'Overdue') && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant={inv.status === 'Overdue' ? 'destructive' : 'default'}
+                                                        className="gap-1.5 hover-lift"
+                                                        disabled={processingPaymentId === inv.id}
+                                                        onClick={() => handlePayment(inv)}
+                                                    >
+                                                        {processingPaymentId === inv.id ? (
+                                                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing...</>
+                                                        ) : (
+                                                            <><CreditCard className="h-3.5 w-3.5" /> Pay Now</>
+                                                        )}
+                                                    </Button>
+                                                )}
+
+                                                {/* Reminder for overdue */}
                                                 {inv.status === 'Overdue' && (
-                                                    <Button variant="ghost" size="icon" title="Send Reminder" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50">
+                                                    <Button variant="ghost" size="icon" title="Send Reminder" className="text-amber-500 hover:bg-amber-500/10 h-8 w-8">
                                                         <Mail className="h-4 w-4" />
                                                     </Button>
                                                 )}
+
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={() => alert(`Viewing ${inv.id}`)}>
-                                                            View Details
-                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => alert(`Viewing ${inv.id}`)}>View Details</DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        {inv.status === 'Pending' && (
-                                                            <DropdownMenuItem
-                                                                onClick={() => handlePayment(inv)}
-                                                                className="text-primary focus:text-primary font-medium"
-                                                                disabled={processingPaymentId === inv.id}
-                                                            >
-                                                                {processingPaymentId === inv.id ? (
-                                                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
-                                                                ) : (
-                                                                    <><CreditCard className="mr-2 h-4 w-4" /> Pay Now</>
-                                                                )}
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        <DropdownMenuItem onClick={() => window.print()}>
-                                                            Download PDF
-                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => window.print()}>Download PDF</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => alert(`Sending reminder for ${inv.id}`)}>Send Reminder</DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>

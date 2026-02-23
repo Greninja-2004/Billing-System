@@ -13,6 +13,7 @@ const NAV_ITEMS = [
     { name: 'Customers', path: '/customers', icon: Users, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
     { name: 'Invoices', path: '/invoices', icon: FileText, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
     { name: 'Payments', path: '/payments', icon: CreditCard, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
+    { name: 'Subscriptions', path: '/subscriptions', icon: CreditCard, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
     { name: 'Reports', path: '/reports', icon: BarChart3, roles: ['ADMIN', 'MANAGER', 'VIEWER'] },
     { name: 'Notifications', path: '/notifications', icon: Bell, roles: ['ADMIN', 'MANAGER', 'VIEWER'], badge: 3 },
     { name: 'Users', path: '/users', icon: ShieldAlert, roles: ['ADMIN'] },
