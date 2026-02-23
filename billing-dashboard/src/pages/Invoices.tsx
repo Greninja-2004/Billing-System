@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useMemo, useEffect } from 'react';
@@ -32,6 +33,7 @@ interface Invoice {
 }
 
 export const Invoices = () => {
+    usePageTitle('Invoices');
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string | null>(null);

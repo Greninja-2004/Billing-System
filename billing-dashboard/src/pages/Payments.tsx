@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect } from 'react';
@@ -25,6 +26,7 @@ interface Payment {
 }
 
 export const Payments = () => {
+    usePageTitle('Payments');
     const [payments, setPayments] = useState<Payment[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);

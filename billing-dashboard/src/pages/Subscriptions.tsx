@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState } from 'react';
@@ -82,6 +83,7 @@ const PLANS = [
 const CURRENT_PLAN = 'professional'; // Simulated current plan
 
 export const Subscriptions = () => {
+    usePageTitle('Subscriptions');
     const [selectedBilling, setSelectedBilling] = useState<'month' | 'year'>('month');
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
 

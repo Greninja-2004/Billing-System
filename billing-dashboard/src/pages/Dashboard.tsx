@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect, useRef } from 'react';
@@ -181,6 +182,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const Dashboard = () => {
+    usePageTitle('Dashboard');
     const [recentTransactions, setRecentTransactions] = useState<Payment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(new Date());

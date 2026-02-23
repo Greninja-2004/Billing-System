@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useMemo, useEffect } from 'react';
@@ -22,6 +23,7 @@ interface Customer {
 }
 
 export const Customers = () => {
+    usePageTitle('Customers');
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);

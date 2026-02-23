@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ interface AuditLogEntry {
 }
 
 export const AuditLog = () => {
+    usePageTitle('Audit Log');
     const [logs, setLogs] = useState<AuditLogEntry[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);

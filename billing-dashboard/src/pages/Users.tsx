@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect } from 'react';
@@ -18,6 +19,7 @@ interface User {
 }
 
 export const Users = () => {
+    usePageTitle('User Management');
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /login
+Disallow: /dashboard
+Disallow: /invoices
+Disallow: /payments
+Disallow: /subscriptions
+Disallow: /customers
+Disallow: /audit
+Disallow: /users
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://billing-system-7i7k.vercel.app/sitemap.xml
