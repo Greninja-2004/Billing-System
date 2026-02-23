@@ -108,14 +108,21 @@ export function NewInvoiceModal({ open, onClose, onSuccess }: NewInvoiceModalPro
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [customerId, setCustomerId] = useState('');
     const [amount, setAmount] = useState('');
-    const [dueDate, setDueDate] = useState('');
     const [type, setType] = useState('One-Time');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
+    // Default due date: 30 days from today
+    const getDefaultDue = () => {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        return d.toISOString().split('T')[0];
+    };
+    const [dueDate, setDueDate] = useState(getDefaultDue());
+
     useEffect(() => {
         if (open) {
-            setAmount(''); setDueDate(''); setType('One-Time'); setError('');
+            setAmount(''); setDueDate(getDefaultDue()); setType('One-Time'); setError('');
             apiFetch('/api/customers').then(r => r.json()).then(data => {
                 const list = Array.isArray(data) ? data : [];
                 setCustomers(list);
