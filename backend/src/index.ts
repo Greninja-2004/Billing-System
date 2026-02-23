@@ -7,8 +7,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJdYdtSCSObO2t',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE',
+    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJds2D7mndHYaD',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || '5ExZZIM32zSddaXSaGdmDUbW',
 });
 
 const app = express();
