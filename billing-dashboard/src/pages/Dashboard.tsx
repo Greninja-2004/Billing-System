@@ -184,19 +184,29 @@ export const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [stats, setStats] = useState({
+        revenue: 0, pendingInvoices: 0, overdueAccounts: 0, activeSubscriptions: 0
+    });
 
     const fetchData = () => {
         setIsRefreshing(true);
-        apiFetch(`/api/payments`)
+        // Fetch role-filtered dashboard stats
+        apiFetch(`/api/dashboard/stats`)
             .then(res => res.json())
             .then(data => {
-                setRecentTransactions(data.slice(0, 6));
+                setStats({
+                    revenue: data.revenue || 0,
+                    pendingInvoices: data.pendingInvoices || 0,
+                    overdueAccounts: data.overdueAccounts || 0,
+                    activeSubscriptions: data.activeSubscriptions || 0,
+                });
+                setRecentTransactions((data.recentPayments || []).slice(0, 6));
                 setLastUpdated(new Date());
                 setIsLoading(false);
                 setIsRefreshing(false);
             })
             .catch(error => {
-                console.error("Error fetching transactions:", error);
+                console.error("Error fetching dashboard stats:", error);
                 setIsLoading(false);
                 setIsRefreshing(false);
             });
@@ -254,43 +264,43 @@ export const Dashboard = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 stagger">
                 <KpiCard
                     title="Total Revenue (YTD)"
-                    value={1245600}
+                    value={stats.revenue}
                     prefix="$"
-                    change={24.5}
-                    changeLabel="vs last year"
+                    change={stats.revenue > 0 ? 24.5 : 0}
+                    changeLabel={stats.revenue > 0 ? 'vs last year' : 'no revenue yet'}
                     icon={DollarSign}
                     color="success"
-                    sparkData={[45, 52, 48, 61, 59, 68, 72, 85, 82, 94, 105, 125]}
+                    sparkData={stats.revenue > 0 ? [45, 52, 48, 61, 59, 68, 72, 85, 82, 94, 105, 125] : [0, 0]}
                     delay={0}
                 />
                 <KpiCard
                     title="Pending Invoices"
-                    value={142}
-                    change={-4.2}
-                    changeLabel="from last month"
+                    value={stats.pendingInvoices}
+                    change={stats.pendingInvoices > 0 ? -4.2 : 0}
+                    changeLabel={stats.pendingInvoices > 0 ? 'from last month' : 'all clear'}
                     icon={FileText}
                     color="primary"
-                    sparkData={[160, 155, 148, 152, 145, 142]}
+                    sparkData={stats.pendingInvoices > 0 ? [160, 155, 148, 152, 145, 142] : [0, 0]}
                     delay={80}
                 />
                 <KpiCard
                     title="Overdue Accounts"
-                    value={24}
-                    change={12}
-                    changeLabel="requires action"
+                    value={stats.overdueAccounts}
+                    change={stats.overdueAccounts > 0 ? 12 : 0}
+                    changeLabel={stats.overdueAccounts > 0 ? 'requires action' : 'all clear'}
                     icon={AlertCircle}
                     color="destructive"
-                    sparkData={[18, 20, 22, 21, 23, 24]}
+                    sparkData={stats.overdueAccounts > 0 ? [18, 20, 22, 21, 23, 24] : [0, 0]}
                     delay={160}
                 />
                 <KpiCard
                     title="Active Subscriptions"
-                    value={1894}
-                    change={8.3}
-                    changeLabel="growth this month"
+                    value={stats.activeSubscriptions}
+                    change={stats.activeSubscriptions > 0 ? 8.3 : 0}
+                    changeLabel={stats.activeSubscriptions > 0 ? 'growth this month' : 'no subscriptions'}
                     icon={Users}
                     color="purple"
-                    sparkData={[1600, 1700, 1750, 1800, 1850, 1894]}
+                    sparkData={stats.activeSubscriptions > 0 ? [1600, 1700, 1750, 1800, 1850, 1894] : [0, 0]}
                     delay={240}
                 />
             </div>

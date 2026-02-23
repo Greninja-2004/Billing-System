@@ -310,6 +310,52 @@ app.post('/api/verify-razorpay-payment', async (req, res) => {
     }
 });
 
+// Dashboard Stats — ADMIN/MANAGER see all, VIEWER sees only their own
+app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
+    try {
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
+        const invoiceWhere = isAdmin ? {} : { customer: { userId: req.user.id } };
+
+        const [revenueResult, pendingCount, overdueCount, recentPayments] = await Promise.all([
+            prisma.invoice.aggregate({
+                where: { ...invoiceWhere, status: 'Paid' },
+                _sum: { amount: true },
+            }),
+            prisma.invoice.count({ where: { ...invoiceWhere, status: 'Pending' } }),
+            prisma.invoice.count({ where: { ...invoiceWhere, status: 'Overdue' } }),
+            prisma.payment.findMany({
+                where: isAdmin ? {} : { invoice: { customer: { userId: req.user.id } } },
+                orderBy: { date: 'desc' },
+                take: 5,
+                include: { invoice: { select: { customer: { select: { name: true } } } } },
+            }),
+        ]);
+
+        // Count active subscriptions (simulated from paid invoices)
+        const activeSubs = await prisma.invoice.count({
+            where: { ...invoiceWhere, type: 'Recurring', status: 'Paid' },
+        });
+
+        res.json({
+            revenue: revenueResult._sum.amount || 0,
+            pendingInvoices: pendingCount,
+            overdueAccounts: overdueCount,
+            activeSubscriptions: activeSubs,
+            recentPayments: recentPayments.map((p: any) => ({
+                id: p.id,
+                customerName: p.invoice?.customer?.name || 'Unknown',
+                amount: p.amount,
+                method: p.method,
+                status: p.status,
+                date: p.date,
+            })),
+        });
+    } catch (error) {
+        console.error('Dashboard stats error:', error);
+        res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`[Node] Billing Dashboard API running on http://localhost:${PORT}`);
 });
