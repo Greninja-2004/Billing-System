@@ -1,10 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-import Stripe from 'stripe';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const stripe = new Stripe('sk_test_51OzA...fakeTestKey...replaceWithRealLater', {
-    apiVersion: '2023-10-16' as any,
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJdYdtSCSObO2t',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE',
 });
 
 const app = express();
@@ -210,40 +214,50 @@ app.get('/api/audit', async (req, res) => {
     }
 });
 
-// Stripe Checkout API
-app.post('/api/create-checkout-session', async (req, res) => {
+// Razorpay: Create Order
+app.post('/api/create-razorpay-order', async (req, res) => {
     try {
         const { invoiceId, amount, customerName } = req.body;
 
-        // In a real application, you would lookup the invoice in the database to verify the amount
-        // const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+        // Razorpay expects amount in paisa (1 INR = 100 paisa)
+        const amountInPaisa = Math.round(Number(amount) * 100);
 
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: `Invoice ${invoiceId} `,
-                            description: `Payment for ${customerName}`,
-                        },
-                        unit_amount: Math.round(amount * 100), // Stripe expects cents
-                    },
-                    quantity: 1,
-                },
-            ],
-            mode: 'payment',
-            success_url: `http://localhost:5175/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `http://localhost:5175/invoices`,
-            metadata: {
-                invoiceId: invoiceId,
-            }
+        const order = await razorpay.orders.create({
+            amount: amountInPaisa,
+            currency: 'INR',
+            receipt: `rcpt_${invoiceId}`.substring(0, 40),
+            notes: { invoiceId, customerName },
         });
 
-        res.json({ id: session.id, url: session.url });
+        res.json({
+            orderId: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJdYdtSCSObO2t',
+        });
     } catch (error: any) {
-        console.error("Stripe Error:", error);
+        console.error('Razorpay Order Error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create order' });
+    }
+});
+
+// Razorpay: Verify Payment Signature
+app.post('/api/verify-razorpay-payment', async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const secret = process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE';
+
+        const hmac = crypto.createHmac('sha256', secret);
+        hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+        const generated_signature = hmac.digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            res.json({ success: true, message: 'Payment verified successfully' });
+        } else {
+            res.status(400).json({ success: false, message: 'Payment verification failed' });
+        }
+    } catch (error: any) {
+        console.error('Razorpay Verify Error:', error);
         res.status(500).json({ error: error.message });
     }
 });

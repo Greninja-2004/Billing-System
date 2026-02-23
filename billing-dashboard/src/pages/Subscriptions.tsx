@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 
-import { loadStripe } from '@stripe/stripe-js';
+declare const Razorpay: any;
 import {
     Check, Zap, Crown, Building2, Loader2, CreditCard,
     Shield, TrendingUp, Users, FileText, Star
 } from 'lucide-react';
-
-const stripePromise = loadStripe('pk_test_51OzA...fakeTestKey...replaceWithRealLater');
 
 const PLANS = [
     {
@@ -93,32 +91,59 @@ export const Subscriptions = () => {
         if (plan.id === CURRENT_PLAN) return;
         try {
             setProcessingPlanId(plan.id);
-            const stripe = await stripePromise;
 
-            const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+            // Step 1: Create Razorpay order
+            const res = await fetch(`${API_BASE_URL}/api/create-razorpay-order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     invoiceId: `sub_${plan.id}`,
                     amount: getPrice(plan.price),
-                    customerName: `${plan.name} Subscription`,
+                    customerName: `${plan.name} Plan Subscription`,
                 }),
             });
+            const order = await res.json();
 
-            const session = await response.json();
-
-            if (session.error) {
-                alert('Failed to start subscription checkout. Please try again.');
+            if (order.error) {
+                alert('Failed to create subscription order. Please try again.');
                 setProcessingPlanId(null);
                 return;
             }
 
-            // @ts-ignore
-            const result = await stripe?.redirectToCheckout({ sessionId: session.id });
-            if (result?.error) {
-                alert(result.error.message);
-                setProcessingPlanId(null);
-            }
+            // Step 2: Open Razorpay modal
+            const options = {
+                key: order.keyId,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Billing Pro',
+                description: `${plan.name} Plan - ${selectedBilling === 'year' ? 'Annual' : 'Monthly'}`,
+                order_id: order.orderId,
+                handler: async (response: any) => {
+                    // Step 3: Verify
+                    const verify = await fetch(`${API_BASE_URL}/api/verify-razorpay-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        }),
+                    });
+                    const result = await verify.json();
+                    if (result.success) {
+                        alert(`✅ Subscribed to ${plan.name}! Payment ID: ${response.razorpay_payment_id}`);
+                    } else {
+                        alert('⚠️ Payment verification failed. Contact support.');
+                    }
+                    setProcessingPlanId(null);
+                },
+                theme: { color: '#3b82f6' },
+                modal: { ondismiss: () => setProcessingPlanId(null) },
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
         } catch (err) {
             console.error(err);
             alert('An error occurred. Please try again.');

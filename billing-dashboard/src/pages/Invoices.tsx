@@ -9,7 +9,6 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Search, Plus, MoreHorizontal, Download, FileCheck, Mail, Loader2, CreditCard, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { loadStripe } from '@stripe/stripe-js';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,8 +18,8 @@ import {
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 
-// Replace with a real publishable key for production
-const stripePromise = loadStripe('pk_test_51OzA...fakeTestKey...replaceWithRealLater');
+// TypeScript type for the Razorpay constructor (loaded from CDN)
+declare const Razorpay: any;
 
 interface Invoice {
     id: string;
@@ -73,44 +72,69 @@ export const Invoices = () => {
     const handlePayment = async (invoice: Invoice) => {
         try {
             setProcessingPaymentId(invoice.id);
-            const stripe = await stripePromise;
 
-            const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+            // Step 1: Create Razorpay order on backend
+            const res = await fetch(`${API_BASE_URL}/api/create-razorpay-order`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     invoiceId: invoice.id,
                     amount: invoice.amount,
                     customerName: invoice.customerName,
                 }),
             });
+            const order = await res.json();
 
-            const session = await response.json();
-
-            if (session.error) {
-                console.error("Stripe Error:", session.error);
-                alert("Failed to initialize payment session.");
+            if (order.error) {
+                alert('Failed to create payment order. Please try again.');
                 setProcessingPaymentId(null);
                 return;
             }
 
-            // Redirect to Stripe Checkout
-            // @ts-ignore - The official stripe-js library has a typing issue with redirectToCheckout in certain module resolution strategies, but it works perfectly at runtime.
-            const result = await stripe?.redirectToCheckout({
-                sessionId: session.id,
-            });
+            // Step 2: Open Razorpay payment modal
+            const options = {
+                key: order.keyId,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Billing Pro',
+                description: `Payment for Invoice ${invoice.id}`,
+                order_id: order.orderId,
+                handler: async (response: any) => {
+                    // Step 3: Verify payment on backend
+                    const verify = await fetch(`${API_BASE_URL}/api/verify-razorpay-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        }),
+                    });
+                    const result = await verify.json();
+                    if (result.success) {
+                        // Update invoice status in local state
+                        setInvoices(prev => prev.map(inv =>
+                            inv.id === invoice.id ? { ...inv, status: 'Paid' } : inv
+                        ));
+                        alert(`✅ Payment successful! Payment ID: ${response.razorpay_payment_id}`);
+                    } else {
+                        alert('⚠️ Payment could not be verified. Please contact support.');
+                    }
+                    setProcessingPaymentId(null);
+                },
+                prefill: { name: invoice.customerName },
+                theme: { color: '#3b82f6' },
+                modal: {
+                    ondismiss: () => setProcessingPaymentId(null),
+                },
+            };
 
-            if (result?.error) {
-                console.error("Stripe Redirect Error:", result.error);
-                alert(result.error.message);
-                setProcessingPaymentId(null);
-            }
+            const rzp = new Razorpay(options);
+            rzp.open();
 
         } catch (error) {
-            console.error("Payment Error:", error);
-            alert("An unexpected error occurred during payment.");
+            console.error('Payment Error:', error);
+            alert('An unexpected error occurred during payment.');
             setProcessingPaymentId(null);
         }
     };
