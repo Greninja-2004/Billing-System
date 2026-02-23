@@ -87,6 +87,10 @@
     @apply bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   /* Smooth Light/Dark mode transitions */
   html,
   body,

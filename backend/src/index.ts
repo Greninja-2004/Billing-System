@@ -50,6 +50,94 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Signup API
+app.post('/api/signup', async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        const existing = await prisma.user.findFirst({
+            where: { OR: [{ username }, { email: email || 'invalid_email' }] }
+        });
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'Username or email already exists' });
+        }
+        const user = await prisma.user.create({
+            data: { username, email, password, role: 'VIEWER' }
+        });
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ success: true, token: 'mock-jwt-token-newuser', user: userWithoutPassword });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database error' });
+    }
+});
+
+// OAuth Initialization
+app.get('/api/auth/:provider', (req, res) => {
+    const { provider } = req.params;
+    // Real implementation would redirect to Google/GitHub/Apple authorization URL here using process.env.CLIENT_ID
+
+    // For local testing, we show a simulated OAuth provider consent screen
+    res.send(`
+        <html>
+            <body style="font-family: sans-serif; display: flex; align-items:center; justify-content:center; height: 100vh; background: #09090b; color: #fff;">
+                <div style="background: #18181b; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: center; border: 1px solid #27272a;">
+                    <h2 style="margin-top: 0; text-transform: capitalize;">Authorize with ${provider}</h2>
+                    <p style="color: #a1a1aa; max-width: 300px; margin: 0 auto 30px;">This is a local simulated OAuth flow. In production, this would be the actual ${provider} login screen.</p>
+                    <a href="/api/auth/${provider}/callback?code=simulated_${provider}_code" style="display:inline-block; padding: 12px 24px; background: #c5f82a; color: black; text-decoration: none; border-radius: 8px; font-weight: 600;">Approve & Continue</a>
+                </div>
+            </body>
+        </html>
+    `);
+});
+
+// OAuth Callback
+app.get('/api/auth/:provider/callback', async (req, res) => {
+    const { provider } = req.params;
+    const { code } = req.query;
+
+    if (!code) return res.status(400).send('No code provided');
+
+    try {
+        // Real implementation: exchange 'code' for access token, then fetch user profile from provider API.
+        const providerId = `mock_${provider}_${Math.floor(Math.random() * 100000)}`;
+        const email = `user@${provider}.local`;
+        const username = `${provider}_user_${Math.floor(Math.random() * 1000)}`;
+
+        let user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { googleId: provider === 'google' ? providerId : 'IGNORE' },
+                    { githubId: provider === 'github' ? providerId : 'IGNORE' },
+                    { appleId: provider === 'apple' ? providerId : 'IGNORE' },
+                    { email } // Link account if email matches
+                ]
+            }
+        });
+
+        if (!user) {
+            user = await prisma.user.create({
+                data: {
+                    username,
+                    email,
+                    googleId: provider === 'google' ? providerId : null,
+                    githubId: provider === 'github' ? providerId : null,
+                    appleId: provider === 'apple' ? providerId : null,
+                    role: 'VIEWER'
+                }
+            });
+        }
+
+        const { password: _, ...userWithoutPassword } = user;
+        const userObjEnc = encodeURIComponent(JSON.stringify(userWithoutPassword));
+
+        // Redirect back to frontend with tokens
+        res.redirect(`http://localhost:5173/login?social_token=mock_jwt_token&social_user=${userObjEnc}`);
+
+    } catch (error) {
+        console.error('OAuth Callback Error:', error);
+        res.redirect('http://localhost:5173/login?error=oauth_failed');
+    }
+});
+
 // Users API (Admin Only typically)
 app.get('/api/users', async (req, res) => {
     try {
@@ -137,7 +225,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: `Invoice ${invoiceId}`,
+                            name: `Invoice ${invoiceId} `,
                             description: `Payment for ${customerName}`,
                         },
                         unit_amount: Math.round(amount * 100), // Stripe expects cents
