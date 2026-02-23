@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
-import { API_BASE_URL } from "../config";
+import {  } from "../config";
 import { useState, useEffect } from 'react';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
@@ -11,8 +11,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import { RefreshCcw, CreditCard, Download, Search, CreditCard as CardIcon, TrendingDown, RotateCcw } from 'lucide-react';
 import { Input } from '../components/ui/input';
 
-// suppress unused import warning
-const _unused = API_BASE_URL;
 
 interface Payment {
     id: string;

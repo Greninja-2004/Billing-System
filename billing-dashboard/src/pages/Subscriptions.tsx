@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
-import { API_BASE_URL } from "../config";
+import {  } from "../config";
 import { useState } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';

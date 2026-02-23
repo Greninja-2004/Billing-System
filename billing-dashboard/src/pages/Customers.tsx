@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { apiFetch } from '../utils/api';
-import { API_BASE_URL } from "../config";
+import {  } from "../config";
 import { useState, useMemo, useEffect } from 'react';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
