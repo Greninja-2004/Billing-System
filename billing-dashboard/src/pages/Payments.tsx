@@ -7,8 +7,11 @@ import {
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { RefreshCcw, CreditCard, Download, Search } from 'lucide-react';
+import { RefreshCcw, CreditCard, Download, Search, CreditCard as CardIcon, TrendingDown, RotateCcw } from 'lucide-react';
 import { Input } from '../components/ui/input';
+
+// suppress unused import warning
+const _unused = API_BASE_URL;
 
 interface Payment {
     id: string;
@@ -30,7 +33,7 @@ export const Payments = () => {
         apiFetch(`/api/payments`)
             .then(res => res.json())
             .then(data => {
-                setPayments(data);
+                setPayments(Array.isArray(data) ? data : []);
                 setLoading(false);
             })
             .catch(error => {
@@ -41,9 +44,19 @@ export const Payments = () => {
 
     const filteredPayments = payments.filter(p =>
         p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.invoiceId.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // Compute live stats from actual data
+    const today = new Date().toDateString();
+    const todayVolume = payments
+        .filter(p => new Date(p.date).toDateString() === today && p.status === 'Completed')
+        .reduce((sum, p) => sum + p.amount, 0);
+    const failedCount = payments.filter(p => p.status === 'Failed').length;
+    const refundsTotal = payments
+        .filter(p => p.status === 'Refunded')
+        .reduce((sum, p) => sum + p.amount, 0);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -59,7 +72,7 @@ export const Payments = () => {
         switch (method) {
             case 'Credit Card': return <CreditCard className="h-4 w-4 mr-2 text-blue-500" />;
             case 'Bank Transfer': return <RefreshCcw className="h-4 w-4 mr-2 text-emerald-500" />;
-            default: return <CreditCard className="h-4 w-4 mr-2 text-purple-500" />; // wallet
+            default: return <CreditCard className="h-4 w-4 mr-2 text-purple-500" />;
         }
     };
 
@@ -68,37 +81,59 @@ export const Payments = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Payments</h2>
-                    <p className="text-muted-foreground mt-1">Review transaction history, run manual charges, and issue refunds.</p>
+                    <p className="text-muted-foreground mt-1">Review your transaction history and refunds.</p>
                 </div>
-                <div className="flex space-x-2">
-                    <Button variant="outline" className="hover-lift" onClick={() => window.print()}><Download className="mr-2 h-4 w-4" /> Export Ledger</Button>
-                    <Button className="hover-lift" onClick={() => alert('Launching Payment Processor Gateway...')}><CreditCard className="mr-2 h-4 w-4" /> Process Payment</Button>
-                </div>
+                <Button variant="outline" className="hover-lift" onClick={() => window.print()}>
+                    <Download className="mr-2 h-4 w-4" /> Export Ledger
+                </Button>
             </div>
 
+            {/* Live stats cards */}
             <div className="grid gap-4 md:grid-cols-3 mb-6">
                 <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Today's Volume</CardTitle>
+                        <CardIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$17,000.00</div>
+                        <div className="text-2xl font-bold">
+                            {payments.length === 0 ? '—' : todayVolume > 0
+                                ? `$${todayVolume.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                : '$0.00'}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {payments.filter(p => new Date(p.date).toDateString() === today).length} transactions today
+                        </p>
                     </CardContent>
                 </Card>
                 <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Failed Transactions</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-destructive">1</div>
+                        <div className={`text-2xl font-bold ${failedCount > 0 ? 'text-destructive' : ''}`}>
+                            {failedCount}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {failedCount === 0 ? (payments.length === 0 ? 'No transactions yet' : 'All clear ✅') : 'Needs attention'}
+                        </p>
                     </CardContent>
                 </Card>
                 <Card className="hover-lift transition-all duration-300">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium">Refunds Issued</CardTitle>
+                        <RotateCcw className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-muted-foreground">$550.00</div>
+                        <div className="text-2xl font-bold text-muted-foreground">
+                            {refundsTotal > 0
+                                ? `$${refundsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                                : '—'}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {payments.filter(p => p.status === 'Refunded').length} refund(s)
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -138,8 +173,12 @@ export const Payments = () => {
                                 </TableRow>
                             ) : filteredPayments.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                                        No transactions found.
+                                    <TableCell colSpan={7} className="h-32 text-center">
+                                        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                            <CardIcon className="h-8 w-8 opacity-30" />
+                                            <p className="font-medium">No payments yet</p>
+                                            <p className="text-xs">Payments will appear here after you pay an invoice.</p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (

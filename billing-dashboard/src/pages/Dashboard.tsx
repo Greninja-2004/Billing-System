@@ -13,6 +13,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
     ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
+import { AddCustomerModal, NewInvoiceModal } from '../components/Modals';
 
 // --- DATA ---
 const revenueData = [
@@ -187,6 +188,8 @@ export const Dashboard = () => {
     const [stats, setStats] = useState({
         revenue: 0, pendingInvoices: 0, overdueAccounts: 0, activeSubscriptions: 0
     });
+    const [showAddCustomer, setShowAddCustomer] = useState(false);
+    const [showNewInvoice, setShowNewInvoice] = useState(false);
 
     const fetchData = () => {
         setIsRefreshing(true);
@@ -216,342 +219,357 @@ export const Dashboard = () => {
 
     // Quick action handlers
     const quickActions = [
-        { label: 'New Invoice', icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10', action: () => alert('Opening New Invoice wizard...') },
-        { label: 'Add Customer', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-500/10', action: () => alert('Opening Add Customer form...') },
-        { label: 'Record Payment', icon: CreditCard, color: 'text-purple-500', bg: 'bg-purple-500/10', action: () => alert('Record Payment modal opening...') },
+        { label: 'New Invoice', icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10', action: () => setShowNewInvoice(true) },
+        { label: 'Add Customer', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-500/10', action: () => setShowAddCustomer(true) },
+        { label: 'Record Payment', icon: CreditCard, color: 'text-purple-500', bg: 'bg-purple-500/10', action: () => alert('Go to Invoices and click Pay Now on a pending invoice.') },
         { label: 'Send Reminder', icon: Bell, color: 'text-amber-500', bg: 'bg-amber-500/10', action: () => alert('Sending payment reminders...') },
     ];
 
     return (
-        <div className="space-y-6 pb-8">
-            {/* ── Header ── */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Dashboard
-                    </h1>
-                    <p className="text-muted-foreground mt-1 text-sm flex items-center gap-2">
-                        <span className="pulse-dot bg-emerald-500 text-emerald-500" />
-                        Live · Last updated {lastUpdated.toLocaleTimeString()}
-                    </p>
-                </div>
-                <div className="flex gap-2 flex-wrap">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="hover-lift gap-2"
-                        onClick={() => window.print()}
-                    >
-                        <FileText className="h-4 w-4" /> Export
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="hover-lift gap-2"
-                        onClick={fetchData}
-                        disabled={isRefreshing}
-                    >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-                    <Button size="sm" className="hover-lift gap-2" onClick={() => alert('Opening New Invoice wizard...')}>
-                        <Plus className="h-4 w-4" /> New Invoice
-                    </Button>
-                </div>
-            </div>
-
-            {/* ── KPI Cards ── */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 stagger">
-                <KpiCard
-                    title="Total Revenue (YTD)"
-                    value={stats.revenue}
-                    prefix="$"
-                    change={stats.revenue > 0 ? 24.5 : 0}
-                    changeLabel={stats.revenue > 0 ? 'vs last year' : 'no revenue yet'}
-                    icon={DollarSign}
-                    color="success"
-                    sparkData={stats.revenue > 0 ? [45, 52, 48, 61, 59, 68, 72, 85, 82, 94, 105, 125] : [0, 0]}
-                    delay={0}
-                />
-                <KpiCard
-                    title="Pending Invoices"
-                    value={stats.pendingInvoices}
-                    change={stats.pendingInvoices > 0 ? -4.2 : 0}
-                    changeLabel={stats.pendingInvoices > 0 ? 'from last month' : 'all clear'}
-                    icon={FileText}
-                    color="primary"
-                    sparkData={stats.pendingInvoices > 0 ? [160, 155, 148, 152, 145, 142] : [0, 0]}
-                    delay={80}
-                />
-                <KpiCard
-                    title="Overdue Accounts"
-                    value={stats.overdueAccounts}
-                    change={stats.overdueAccounts > 0 ? 12 : 0}
-                    changeLabel={stats.overdueAccounts > 0 ? 'requires action' : 'all clear'}
-                    icon={AlertCircle}
-                    color="destructive"
-                    sparkData={stats.overdueAccounts > 0 ? [18, 20, 22, 21, 23, 24] : [0, 0]}
-                    delay={160}
-                />
-                <KpiCard
-                    title="Active Subscriptions"
-                    value={stats.activeSubscriptions}
-                    change={stats.activeSubscriptions > 0 ? 8.3 : 0}
-                    changeLabel={stats.activeSubscriptions > 0 ? 'growth this month' : 'no subscriptions'}
-                    icon={Users}
-                    color="purple"
-                    sparkData={stats.activeSubscriptions > 0 ? [1600, 1700, 1750, 1800, 1850, 1894] : [0, 0]}
-                    delay={240}
-                />
-            </div>
-
-            {/* ── Quick Actions ── */}
-            <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {quickActions.map(({ label, icon: Icon, color, bg, action }) => (
-                        <button
-                            key={label}
-                            onClick={action}
-                            className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border bg-card hover:${bg} hover:border-transparent transition-all duration-200 hover-lift group text-center`}
+        <>
+            <AddCustomerModal
+                open={showAddCustomer}
+                onClose={() => setShowAddCustomer(false)}
+                onSuccess={() => { setShowAddCustomer(false); fetchData(); alert('✅ Customer added successfully!'); }}
+            />
+            <NewInvoiceModal
+                open={showNewInvoice}
+                onClose={() => setShowNewInvoice(false)}
+                onSuccess={() => { setShowNewInvoice(false); fetchData(); alert('✅ Invoice created! You can now pay it from the Invoices page.'); }}
+            />
+            <div className="space-y-6 pb-8">
+                {/* ── Header ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Dashboard
+                        </h1>
+                        <p className="text-muted-foreground mt-1 text-sm flex items-center gap-2">
+                            <span className="pulse-dot bg-emerald-500 text-emerald-500" />
+                            Live · Last updated {lastUpdated.toLocaleTimeString()}
+                        </p>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover-lift gap-2"
+                            onClick={() => window.print()}
                         >
-                            <div className={`h-10 w-10 rounded-lg ${bg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
-                                <Icon className={`h-5 w-5 ${color}`} />
-                            </div>
-                            <span className="text-sm font-medium">{label}</span>
-                        </button>
-                    ))}
+                            <FileText className="h-4 w-4" /> Export
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="hover-lift gap-2"
+                            onClick={fetchData}
+                            disabled={isRefreshing}
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                        <Button size="sm" className="hover-lift gap-2" onClick={() => alert('Opening New Invoice wizard...')}>
+                            <Plus className="h-4 w-4" /> New Invoice
+                        </Button>
+                    </div>
                 </div>
-            </div>
 
-            {/* ── Charts Row ── */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 animate-slide-up" style={{ animationDelay: '320ms' }}>
+                {/* ── KPI Cards ── */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 stagger">
+                    <KpiCard
+                        title="Total Revenue (YTD)"
+                        value={stats.revenue}
+                        prefix="$"
+                        change={stats.revenue > 0 ? 24.5 : 0}
+                        changeLabel={stats.revenue > 0 ? 'vs last year' : 'no revenue yet'}
+                        icon={DollarSign}
+                        color="success"
+                        sparkData={stats.revenue > 0 ? [45, 52, 48, 61, 59, 68, 72, 85, 82, 94, 105, 125] : [0, 0]}
+                        delay={0}
+                    />
+                    <KpiCard
+                        title="Pending Invoices"
+                        value={stats.pendingInvoices}
+                        change={stats.pendingInvoices > 0 ? -4.2 : 0}
+                        changeLabel={stats.pendingInvoices > 0 ? 'from last month' : 'all clear'}
+                        icon={FileText}
+                        color="primary"
+                        sparkData={stats.pendingInvoices > 0 ? [160, 155, 148, 152, 145, 142] : [0, 0]}
+                        delay={80}
+                    />
+                    <KpiCard
+                        title="Overdue Accounts"
+                        value={stats.overdueAccounts}
+                        change={stats.overdueAccounts > 0 ? 12 : 0}
+                        changeLabel={stats.overdueAccounts > 0 ? 'requires action' : 'all clear'}
+                        icon={AlertCircle}
+                        color="destructive"
+                        sparkData={stats.overdueAccounts > 0 ? [18, 20, 22, 21, 23, 24] : [0, 0]}
+                        delay={160}
+                    />
+                    <KpiCard
+                        title="Active Subscriptions"
+                        value={stats.activeSubscriptions}
+                        change={stats.activeSubscriptions > 0 ? 8.3 : 0}
+                        changeLabel={stats.activeSubscriptions > 0 ? 'growth this month' : 'no subscriptions'}
+                        icon={Users}
+                        color="purple"
+                        sparkData={stats.activeSubscriptions > 0 ? [1600, 1700, 1750, 1800, 1850, 1894] : [0, 0]}
+                        delay={240}
+                    />
+                </div>
 
-                {/* Revenue Area Chart */}
-                <Card className="lg:col-span-4 hover-lift transition-all duration-300">
-                    <CardHeader className="flex flex-row items-start justify-between pb-2">
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-primary" />
-                                Revenue Forecast
-                            </CardTitle>
-                            <CardDescription className="mt-1">Monthly recurring revenue vs prior year</CardDescription>
-                        </div>
-                        <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
-                            ↑ 24.5% YoY
-                        </Badge>
-                    </CardHeader>
-                    <CardContent className="pl-0 pt-0">
-                        <div className="h-[280px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={revenueData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                                        </linearGradient>
-                                        <linearGradient id="prev" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.15)" />
-                                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `$${v / 1000}k`} />
-                                    <RechartsTooltip content={<CustomTooltip />} />
-                                    <Area type="monotone" dataKey="prev" name="Prior Year" stroke="#6366f1" strokeWidth={1.5} fill="url(#prev)" dot={false} strokeDasharray="4 2" />
-                                    <Area type="monotone" dataKey="value" name="This Year" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Invoice Status Donut */}
-                <Card className="lg:col-span-3 hover-lift transition-all duration-300">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Activity className="h-4 w-4 text-primary" />
-                            Invoice Breakdown
-                        </CardTitle>
-                        <CardDescription>Payment distribution across all invoices</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[180px] w-full flex justify-center">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={statusData}
-                                        innerRadius={55}
-                                        outerRadius={78}
-                                        paddingAngle={4}
-                                        dataKey="value"
-                                        stroke="none"
-                                        startAngle={90}
-                                        endAngle={450}
-                                    >
-                                        {statusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <RechartsTooltip formatter={(val) => [`${val}%`, '']} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                            {statusData.map((item) => (
-                                <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-default">
-                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium truncate">{item.name}</p>
-                                    </div>
-                                    <span className="text-xs font-bold text-muted-foreground">{item.value}%</span>
+                {/* ── Quick Actions ── */}
+                <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {quickActions.map(({ label, icon: Icon, color, bg, action }) => (
+                            <button
+                                key={label}
+                                onClick={action}
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border bg-card hover:${bg} hover:border-transparent transition-all duration-200 hover-lift group text-center`}
+                            >
+                                <div className={`h-10 w-10 rounded-lg ${bg} flex items-center justify-center transition-transform duration-200 group-hover:scale-110`}>
+                                    <Icon className={`h-5 w-5 ${color}`} />
                                 </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                                <span className="text-sm font-medium">{label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-            {/* ── Weekly Bar Chart + Transactions ── */}
-            <div className="grid gap-4 lg:grid-cols-3 animate-slide-up" style={{ animationDelay: '380ms' }}>
+                {/* ── Charts Row ── */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 animate-slide-up" style={{ animationDelay: '320ms' }}>
 
-                {/* Weekly volume */}
-                <Card className="hover-lift">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Zap className="h-4 w-4 text-amber-500" />
-                            This Week
-                        </CardTitle>
-                        <CardDescription>Daily transaction volume</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pl-0">
-                        <div className="h-[180px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={weeklyData} margin={{ top: 0, right: 10, left: 0, bottom: 0 }} barCategoryGap="30%">
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.12)" />
-                                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `$${v / 1000}k`} />
-                                    <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-                                    <Bar dataKey="amount" name="Revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="flex items-center justify-between mt-3 px-2">
-                            <span className="text-xs text-muted-foreground">Total</span>
-                            <span className="text-sm font-bold">${weeklyData.reduce((a, b) => a + b.amount, 0).toLocaleString()}</span>
-                        </div>
-                    </CardContent>
-                </Card>
+                    {/* Revenue Area Chart */}
+                    <Card className="lg:col-span-4 hover-lift transition-all duration-300">
+                        <CardHeader className="flex flex-row items-start justify-between pb-2">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4 text-primary" />
+                                    Revenue Forecast
+                                </CardTitle>
+                                <CardDescription className="mt-1">Monthly recurring revenue vs prior year</CardDescription>
+                            </div>
+                            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
+                                ↑ 24.5% YoY
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="pl-0 pt-0">
+                            <div className="h-[280px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={revenueData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                            </linearGradient>
+                                            <linearGradient id="prev" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.15)" />
+                                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `$${v / 1000}k`} />
+                                        <RechartsTooltip content={<CustomTooltip />} />
+                                        <Area type="monotone" dataKey="prev" name="Prior Year" stroke="#6366f1" strokeWidth={1.5} fill="url(#prev)" dot={false} strokeDasharray="4 2" />
+                                        <Area type="monotone" dataKey="value" name="This Year" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                {/* Recent Payment Activity */}
-                <Card className="lg:col-span-2 hover-lift transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
+                    {/* Invoice Status Donut */}
+                    <Card className="lg:col-span-3 hover-lift transition-all duration-300">
+                        <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Activity className="h-4 w-4 text-primary" />
-                                Recent Transactions
+                                Invoice Breakdown
                             </CardTitle>
-                            <CardDescription>Live feed of latest payments</CardDescription>
-                        </div>
-                        <Button variant="ghost" size="sm" className="gap-1 text-xs">
-                            View all <ChevronRight className="h-3 w-3" />
-                        </Button>
+                            <CardDescription>Payment distribution across all invoices</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-[180px] w-full flex justify-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={statusData}
+                                            innerRadius={55}
+                                            outerRadius={78}
+                                            paddingAngle={4}
+                                            dataKey="value"
+                                            stroke="none"
+                                            startAngle={90}
+                                            endAngle={450}
+                                        >
+                                            {statusData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <RechartsTooltip formatter={(val) => [`${val}%`, '']} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                {statusData.map((item) => (
+                                    <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-default">
+                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium truncate">{item.name}</p>
+                                        </div>
+                                        <span className="text-xs font-bold text-muted-foreground">{item.value}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* ── Weekly Bar Chart + Transactions ── */}
+                <div className="grid gap-4 lg:grid-cols-3 animate-slide-up" style={{ animationDelay: '380ms' }}>
+
+                    {/* Weekly volume */}
+                    <Card className="hover-lift">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Zap className="h-4 w-4 text-amber-500" />
+                                This Week
+                            </CardTitle>
+                            <CardDescription>Daily transaction volume</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pl-0">
+                            <div className="h-[180px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={weeklyData} margin={{ top: 0, right: 10, left: 0, bottom: 0 }} barCategoryGap="30%">
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.12)" />
+                                        <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `$${v / 1000}k`} />
+                                        <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
+                                        <Bar dataKey="amount" name="Revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex items-center justify-between mt-3 px-2">
+                                <span className="text-xs text-muted-foreground">Total</span>
+                                <span className="text-sm font-bold">${weeklyData.reduce((a, b) => a + b.amount, 0).toLocaleString()}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Payment Activity */}
+                    <Card className="lg:col-span-2 hover-lift transition-all duration-300">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Activity className="h-4 w-4 text-primary" />
+                                    Recent Transactions
+                                </CardTitle>
+                                <CardDescription>Live feed of latest payments</CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                                View all <ChevronRight className="h-3 w-3" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-1">
+                                {isLoading ? (
+                                    // Shimmer skeleton
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3 rounded-lg gap-4">
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <div className="shimmer w-8 h-8 rounded-full flex-shrink-0" />
+                                                <div className="space-y-1.5 flex-1">
+                                                    <div className="shimmer h-3 w-28 rounded" />
+                                                    <div className="shimmer h-2.5 w-20 rounded" />
+                                                </div>
+                                            </div>
+                                            <div className="shimmer h-5 w-16 rounded-full" />
+                                            <div className="shimmer h-4 w-16 rounded" />
+                                        </div>
+                                    ))
+                                ) : recentTransactions.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground text-sm">No transactions found</div>
+                                ) : (
+                                    recentTransactions.map((tx, i) => (
+                                        <div
+                                            key={tx.id}
+                                            className="table-row-hover flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border/50 group animate-slide-up"
+                                            style={{ animationDelay: `${i * 60}ms` }}
+                                        >
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${tx.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600' :
+                                                    tx.status === 'Failed' ? 'bg-red-500/10 text-red-600' :
+                                                        'bg-amber-500/10 text-amber-600'
+                                                    }`}>
+                                                    {(tx.customerName || '?').substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium truncate">{tx.customerName}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 flex-shrink-0">
+                                                <StatusBadge status={tx.status} />
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold">${tx.amount.toFixed(2)}</p>
+                                                </div>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* ── Goal Progress ── */}
+                <Card className="hover-lift animate-slide-up" style={{ animationDelay: '420ms' }}>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-primary" />
+                            Annual Goals
+                        </CardTitle>
+                        <CardDescription>Progress towards financial targets for FY 2026</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-1">
-                            {isLoading ? (
-                                // Shimmer skeleton
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <div key={i} className="flex items-center justify-between p-3 rounded-lg gap-4">
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <div className="shimmer w-8 h-8 rounded-full flex-shrink-0" />
-                                            <div className="space-y-1.5 flex-1">
-                                                <div className="shimmer h-3 w-28 rounded" />
-                                                <div className="shimmer h-2.5 w-20 rounded" />
-                                            </div>
+                        <div className="grid sm:grid-cols-3 gap-6">
+                            {[
+                                { label: 'Revenue Goal', current: 1245600, target: 1500000, color: 'bg-blue-500' },
+                                { label: 'New Customers', current: 856, target: 1000, color: 'bg-emerald-500' },
+                                { label: 'Avg Invoice Value', current: 2840, target: 3500, color: 'bg-purple-500' },
+                            ].map(({ label, current, target, color }) => {
+                                const pct = Math.min(Math.round((current / target) * 100), 100);
+                                return (
+                                    <div key={label} className="space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium">{label}</span>
+                                            <span className="font-bold text-muted-foreground">{pct}%</span>
                                         </div>
-                                        <div className="shimmer h-5 w-16 rounded-full" />
-                                        <div className="shimmer h-4 w-16 rounded" />
+                                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${color} rounded-full progress-bar-fill`}
+                                                style={{ '--target-width': `${pct}%` } as React.CSSProperties}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            {current >= 1000 ? `$${(current / 1000).toFixed(1)}k` : current} of {target >= 1000 ? `$${(target / 1000).toFixed(0)}k` : target}
+                                        </p>
                                     </div>
-                                ))
-                            ) : recentTransactions.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground text-sm">No transactions found</div>
-                            ) : (
-                                recentTransactions.map((tx, i) => (
-                                    <div
-                                        key={tx.id}
-                                        className="table-row-hover flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border/50 group animate-slide-up"
-                                        style={{ animationDelay: `${i * 60}ms` }}
-                                    >
-                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${tx.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                tx.status === 'Failed' ? 'bg-red-500/10 text-red-600' :
-                                                    'bg-amber-500/10 text-amber-600'
-                                                }`}>
-                                                {(tx.customerName || '?').substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-medium truncate">{tx.customerName}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 flex-shrink-0">
-                                            <StatusBadge status={tx.status} />
-                                            <div className="text-right">
-                                                <p className="text-sm font-bold">${tx.amount.toFixed(2)}</p>
-                                            </div>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>
             </div>
-
-            {/* ── Goal Progress ── */}
-            <Card className="hover-lift animate-slide-up" style={{ animationDelay: '420ms' }}>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        Annual Goals
-                    </CardTitle>
-                    <CardDescription>Progress towards financial targets for FY 2026</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid sm:grid-cols-3 gap-6">
-                        {[
-                            { label: 'Revenue Goal', current: 1245600, target: 1500000, color: 'bg-blue-500' },
-                            { label: 'New Customers', current: 856, target: 1000, color: 'bg-emerald-500' },
-                            { label: 'Avg Invoice Value', current: 2840, target: 3500, color: 'bg-purple-500' },
-                        ].map(({ label, current, target, color }) => {
-                            const pct = Math.min(Math.round((current / target) * 100), 100);
-                            return (
-                                <div key={label} className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="font-medium">{label}</span>
-                                        <span className="font-bold text-muted-foreground">{pct}%</span>
-                                    </div>
-                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full ${color} rounded-full progress-bar-fill`}
-                                            style={{ '--target-width': `${pct}%` } as React.CSSProperties}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {current >= 1000 ? `$${(current / 1000).toFixed(1)}k` : current} of {target >= 1000 ? `$${(target / 1000).toFixed(0)}k` : target}
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+        </div >
+        </>
     );
 };
+
+

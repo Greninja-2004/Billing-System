@@ -197,6 +197,64 @@ app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
+// Create Customer (linked to the authenticated user)
+app.post('/api/customers', requireAuth, async (req: any, res) => {
+    try {
+        const { name, email, tier, phone } = req.body;
+        if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
+
+        const customer = await prisma.customer.create({
+            data: {
+                id: `CUST-${Date.now().toString(36).toUpperCase()}`,
+                name,
+                email,
+                tier: tier || 'Standard',
+                creditScore: 700,
+                lifetimeValue: 0,
+                status: 'Active',
+                joined: new Date(),
+                userId: req.user.id,
+            }
+        });
+        res.json({ success: true, customer });
+    } catch (error: any) {
+        console.error('Create customer error:', error);
+        if (error.code === 'P2002') return res.status(400).json({ error: 'Email already exists' });
+        res.status(500).json({ error: 'Failed to create customer' });
+    }
+});
+
+// Create Invoice (linked to one of the user's customers)
+app.post('/api/invoices', requireAuth, async (req: any, res) => {
+    try {
+        const { customerId, amount, dueDate, type } = req.body;
+        if (!customerId || !amount || !dueDate) return res.status(400).json({ error: 'customerId, amount, and dueDate are required' });
+
+        // Ensure the customer belongs to this user (unless admin)
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
+        const customer = await prisma.customer.findFirst({
+            where: isAdmin ? { id: customerId } : { id: customerId, userId: req.user.id }
+        });
+        if (!customer) return res.status(404).json({ error: 'Customer not found or not yours' });
+
+        const invoice = await prisma.invoice.create({
+            data: {
+                id: `INV-${Date.now().toString(36).toUpperCase()}`,
+                customerId,
+                amount: parseFloat(amount),
+                dueDate: new Date(dueDate),
+                status: 'Pending',
+                type: type || 'One-Time',
+            }
+        });
+        res.json({ success: true, invoice });
+    } catch (error: any) {
+        console.error('Create invoice error:', error);
+        res.status(500).json({ error: 'Failed to create invoice' });
+    }
+});
+
+
 // Customers API — ADMIN/MANAGER see all, VIEWER sees only their own
 app.get('/api/customers', requireAuth, async (req: any, res) => {
     try {
