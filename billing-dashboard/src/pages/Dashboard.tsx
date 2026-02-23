@@ -9,7 +9,7 @@ import {
     ChevronRight, MoreHorizontal
 } from 'lucide-react';
 import {
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+    XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
     ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 
@@ -475,8 +475,8 @@ export const Dashboard = () => {
                                     >
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${tx.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-600' :
-                                                    tx.status === 'Failed' ? 'bg-red-500/10 text-red-600' :
-                                                        'bg-amber-500/10 text-amber-600'
+                                                tx.status === 'Failed' ? 'bg-red-500/10 text-red-600' :
+                                                    'bg-amber-500/10 text-amber-600'
                                                 }`}>
                                                 {(tx.customerName || '?').substring(0, 2).toUpperCase()}
                                             </div>
