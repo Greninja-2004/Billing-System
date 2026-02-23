@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState } from 'react';
 import { Card, CardContent } from '../components/ui/card';
@@ -93,7 +94,7 @@ export const Subscriptions = () => {
             setProcessingPlanId(plan.id);
 
             // Step 1: Create Razorpay order
-            const res = await fetch(`${API_BASE_URL}/api/create-razorpay-order`, {
+            const res = await apiFetch(`/api/create-razorpay-order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -120,7 +121,7 @@ export const Subscriptions = () => {
                 order_id: order.orderId,
                 handler: async (response: any) => {
                     // Step 3: Verify
-                    const verify = await fetch(`${API_BASE_URL}/api/verify-razorpay-payment`, {
+                    const verify = await apiFetch(`/api/verify-razorpay-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

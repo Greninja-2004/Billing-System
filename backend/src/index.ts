@@ -3,8 +3,31 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'billing_pro_jwt_secret_change_in_prod';
+
+// ── Auth Middleware ───────────────────────────────────────────────────────────
+function requireAuth(req: any, res: any, next: any) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Authentication required' });
+    try {
+        req.user = jwt.verify(token, JWT_SECRET) as any;
+        next();
+    } catch {
+        return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+}
+
+function requireAdmin(req: any, res: any, next: any) {
+    if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'MANAGER')) {
+        return res.status(403).json({ error: 'Access denied: Admin/Manager only' });
+    }
+    next();
+}
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_SJds2D7mndHYaD',
@@ -31,21 +54,20 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', database: 'connected' });
 });
 
-// Authentication API
+// Login API — issues a real JWT
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await prisma.user.findUnique({ where: { username } });
-        // In a real app, compare hashed passwords here!
         if (user && user.password === password) {
-            // Update last login
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { lastLogin: new Date() }
-            });
-
+            await prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } });
             const { password: _, ...userWithoutPassword } = user;
-            res.json({ success: true, token: 'fake-jwt-token-bz9182', user: userWithoutPassword });
+            const token = jwt.sign(
+                { id: user.id, username: user.username, role: user.role, email: user.email },
+                JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+            res.json({ success: true, token, user: userWithoutPassword });
         } else {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -54,22 +76,43 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Signup API
+// Signup API — creates VIEWER user + linked Customer record
 app.post('/api/signup', async (req, res) => {
     const { username, email, password } = req.body;
     try {
         const existing = await prisma.user.findFirst({
-            where: { OR: [{ username }, { email: email || 'invalid_email' }] }
+            where: { OR: [{ username }, { email: email || '_no_email_' }] }
         });
-        if (existing) {
-            return res.status(400).json({ success: false, message: 'Username or email already exists' });
-        }
+        if (existing) return res.status(400).json({ success: false, message: 'Username or email already exists' });
+
         const user = await prisma.user.create({
             data: { username, email, password, role: 'VIEWER' }
         });
+
+        // Auto-create a linked Customer record for this new user
+        await prisma.customer.create({
+            data: {
+                id: `CUST-${user.id.substring(0, 8).toUpperCase()}`,
+                name: username,
+                email: email || `${username}@billing.local`,
+                tier: 'Standard',
+                creditScore: 700,
+                lifetimeValue: 0,
+                status: 'Active',
+                joined: new Date(),
+                userId: user.id,
+            }
+        });
+
         const { password: _, ...userWithoutPassword } = user;
-        res.json({ success: true, token: 'mock-jwt-token-newuser', user: userWithoutPassword });
-    } catch (error) {
+        const token = jwt.sign(
+            { id: user.id, username: user.username, role: user.role, email: user.email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        res.json({ success: true, token, user: userWithoutPassword });
+    } catch (error: any) {
+        console.error('Signup error:', error);
         res.status(500).json({ success: false, error: 'Database error' });
     }
 });
@@ -142,8 +185,8 @@ app.get('/api/auth/:provider/callback', async (req, res) => {
     }
 });
 
-// Users API (Admin Only typically)
-app.get('/api/users', async (req, res) => {
+// Users API (ADMIN only)
+app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
     try {
         const users = await prisma.user.findMany({
             select: { id: true, username: true, role: true, status: true, lastLogin: true, createdAt: true }
@@ -154,10 +197,12 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// Customers API
-app.get('/api/customers', async (req, res) => {
+// Customers API — ADMIN/MANAGER see all, VIEWER sees only their own
+app.get('/api/customers', requireAuth, async (req: any, res) => {
     try {
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
         const customers = await prisma.customer.findMany({
+            where: isAdmin ? {} : { userId: req.user.id },
             orderBy: { joined: 'desc' }
         });
         res.json(customers);
@@ -166,14 +211,15 @@ app.get('/api/customers', async (req, res) => {
     }
 });
 
-// Invoices API
-app.get('/api/invoices', async (req, res) => {
+// Invoices API — ADMIN/MANAGER see all, VIEWER sees only their own
+app.get('/api/invoices', requireAuth, async (req: any, res) => {
     try {
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
         const invoices = await prisma.invoice.findMany({
+            where: isAdmin ? {} : { customer: { userId: req.user.id } },
             include: { customer: { select: { name: true } } },
             orderBy: { dueDate: 'desc' }
         });
-        // Flatten the response slightly to match frontend expectations
         const formattedInvoices = invoices.map((i: any) => ({
             ...i,
             customerName: i.customer.name,
@@ -185,10 +231,12 @@ app.get('/api/invoices', async (req, res) => {
     }
 });
 
-// Payments API
-app.get('/api/payments', async (req, res) => {
+// Payments API — ADMIN/MANAGER see all, VIEWER sees only their own
+app.get('/api/payments', requireAuth, async (req: any, res) => {
     try {
+        const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
         const payments = await prisma.payment.findMany({
+            where: isAdmin ? {} : { invoice: { customer: { userId: req.user.id } } },
             include: { invoice: { select: { customer: { select: { name: true } } } } },
             orderBy: { date: 'desc' }
         });
@@ -202,8 +250,8 @@ app.get('/api/payments', async (req, res) => {
     }
 });
 
-// Audit Logs API
-app.get('/api/audit', async (req, res) => {
+// Audit Logs API (ADMIN/MANAGER only)
+app.get('/api/audit', requireAuth, requireAdmin, async (req, res) => {
     try {
         const logs = await prisma.auditLog.findMany({
             orderBy: { time: 'desc' }

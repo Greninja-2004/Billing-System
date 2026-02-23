@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useMemo, useEffect } from 'react';
 import {
@@ -26,7 +27,7 @@ export const Customers = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/api/customers`)
+        apiFetch(`/api/customers`)
             .then(res => res.json())
             .then(data => {
                 setCustomers(data);

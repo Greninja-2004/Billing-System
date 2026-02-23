@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -186,7 +187,7 @@ export const Dashboard = () => {
 
     const fetchData = () => {
         setIsRefreshing(true);
-        fetch(`${API_BASE_URL}/api/payments`)
+        apiFetch(`/api/payments`)
             .then(res => res.json())
             .then(data => {
                 setRecentTransactions(data.slice(0, 6));

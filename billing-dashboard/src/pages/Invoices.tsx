@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useMemo, useEffect } from 'react';
 import {
@@ -38,7 +39,7 @@ export const Invoices = () => {
     const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/api/invoices`)
+        apiFetch(`/api/invoices`)
             .then(res => res.json())
             .then(data => {
                 setInvoices(data);
@@ -74,7 +75,7 @@ export const Invoices = () => {
             setProcessingPaymentId(invoice.id);
 
             // Step 1: Create Razorpay order on backend
-            const res = await fetch(`${API_BASE_URL}/api/create-razorpay-order`, {
+            const res = await apiFetch(`/api/create-razorpay-order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -101,7 +102,7 @@ export const Invoices = () => {
                 order_id: order.orderId,
                 handler: async (response: any) => {
                     // Step 3: Verify payment on backend
-                    const verify = await fetch(`${API_BASE_URL}/api/verify-razorpay-payment`, {
+                    const verify = await apiFetch(`/api/verify-razorpay-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

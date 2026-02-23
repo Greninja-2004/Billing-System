@@ -23,6 +23,8 @@ model User {
   lastLogin DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  customers Customer[]  // Back-relation
 }
 
 model Customer {
@@ -34,7 +36,10 @@ model Customer {
   lifetimeValue Float     @default(0.0)
   status        String    @default("Active") // Active, Suspended
   joined        DateTime  @default(now())
-  
+
+  userId        String?   // Links to the User who owns this customer record
+  user          User?     @relation(fields: [userId], references: [id])
+
   invoices      Invoice[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

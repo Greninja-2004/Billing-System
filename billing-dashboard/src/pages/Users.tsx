@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect } from 'react';
 import {
@@ -21,7 +22,7 @@ export const Users = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/api/users`)
+        apiFetch(`/api/users`)
             .then(res => res.json())
             .then(data => {
                 setUsers(data);

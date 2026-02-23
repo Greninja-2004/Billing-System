@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api';
 import { API_BASE_URL } from "../config";
 import { useState, useEffect } from 'react';
 import {
@@ -25,7 +26,7 @@ export const AuditLog = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API_BASE_URL}/api/audit`)
+        apiFetch(`/api/audit`)
             .then(res => res.json())
             .then(data => {
                 setLogs(data);
