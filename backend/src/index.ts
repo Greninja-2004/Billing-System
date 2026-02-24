@@ -372,7 +372,7 @@ app.post('/api/verify-razorpay-payment', async (req, res) => {
 app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
         const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
-        const invoiceWhere = isAdmin ? {} : { customer: { userId: req.user.id } };
+        const invoiceWhere: any = isAdmin ? {} : { customer: { userId: String(req.user.id) } };
 
         const [revenueResult, pendingCount, overdueCount, recentPayments] = await Promise.all([
             prisma.invoice.aggregate({
@@ -382,7 +382,7 @@ app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
             prisma.invoice.count({ where: { ...invoiceWhere, status: 'Pending' } }),
             prisma.invoice.count({ where: { ...invoiceWhere, status: 'Overdue' } }),
             prisma.payment.findMany({
-                where: isAdmin ? {} : { invoice: { customer: { userId: req.user.id } } },
+                where: isAdmin ? {} : ({ invoice: { customer: { userId: String(req.user.id) } } } as any),
                 orderBy: { date: 'desc' },
                 take: 5,
                 include: { invoice: { select: { customer: { select: { name: true } } } } },
@@ -395,7 +395,7 @@ app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
         });
 
         res.json({
-            revenue: revenueResult._sum.amount || 0,
+            revenue: revenueResult._sum?.amount || 0,
             pendingInvoices: pendingCount,
             overdueAccounts: overdueCount,
             activeSubscriptions: activeSubs,
