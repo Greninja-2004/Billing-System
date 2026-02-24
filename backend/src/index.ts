@@ -274,7 +274,7 @@ app.get('/api/invoices', requireAuth, async (req: any, res) => {
     try {
         const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
         const invoices = await prisma.invoice.findMany({
-            where: isAdmin ? {} : { customer: { userId: req.user.id } },
+            where: isAdmin ? {} : ({ customer: { userId: String(req.user.id) } } as any),
             include: { customer: { select: { name: true } } },
             orderBy: { dueDate: 'desc' }
         });
@@ -294,7 +294,7 @@ app.get('/api/payments', requireAuth, async (req: any, res) => {
     try {
         const isAdmin = req.user.role === 'ADMIN' || req.user.role === 'MANAGER';
         const payments = await prisma.payment.findMany({
-            where: isAdmin ? {} : { invoice: { customer: { userId: req.user.id } } },
+            where: isAdmin ? {} : ({ invoice: { customer: { userId: String(req.user.id) } } } as any),
             include: { invoice: { select: { customer: { select: { name: true } } } } },
             orderBy: { date: 'desc' }
         });
